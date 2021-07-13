@@ -20,13 +20,8 @@ To model check 1-Update, you need to download and install the TLA+ Toolbox so th
 ### File Structure
 * __The 1-Update specification__ is decoupled into two modules folder for simplicity. *OneUpdate.tla* and *OneUpdateMeta.tla*.
 
-#### Caveats 
-* 
-
 ----
 ### License
 This work is freely distributed under the [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0 "Apache 2.0").  
 
-### Contact
- Antonios Katsarakis: <a href="http://antonis.io/" title="Personal webpage" target="_blank">`antonis.io`</a> |  [`antoniskatsarakis@yahoo.com`](mailto:antoniskatsarakis@yahoo.com?subject=[GitHub]%20Zeus%20Specification "Email")
 
