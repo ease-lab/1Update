@@ -1,10 +1,18 @@
 --------------------------- MODULE OneUpdateMeta ---------------------------
+\* This module is a formal specification of 1-Update, 
+\* a hybrid invalidate and update cache coherence protocol that appears in PACT'21. 
+\* This spec actually includes two variants of 1-Update one in which acks for updates 
+\* are gathered directly by the directory (the main variant discussed in the paper);
+\* and another variant where acks for updates are gathered by the writer itself.
+\* Setting the constant ENABLE_DIR_ACKS TRUE or FALSE verifies either variant accordingly.
 
 EXTENDS     Integers, FiniteSets
 
 CONSTANTS   CORES, 
             MAX_WRITES,
-            WRITE_TO_UPDATE \* I.e., number of write on which we will trigger the Update
+            WRITE_TO_UPDATE, \* I.e., number of write on which we will trigger the Update
+            ENABLE_DIR_ACKS  \* - If TRUE:  update acks are gathered by the directory. 
+                             \* - If FALSE: update acks are gathered by the writer.
 
 VARIABLES   \* variable prefixes --> g:global, d: directory, c: cache/core | VECTORS indexed by cache/core_id
             \* GLOBAL variables 
@@ -16,6 +24,7 @@ VARIABLES   \* variable prefixes --> g:global, d: directory, c: cache/core | VEC
             dSharers,    \* No sharers/owner: .readers = {} / .owner = 0 
             dReqPending,
             dState,
+            dRcvAcks,
             \* Cache/core variables 
             cState,
             cRcvAcks,
@@ -23,7 +32,7 @@ VARIABLES   \* variable prefixes --> g:global, d: directory, c: cache/core | VEC
             cData, 
             mData \* Memory data 
 
-vars == <<dOwner, dSharers, dReqPending, dState, 
+vars == <<dOwner, dSharers, dReqPending, dState, dRcvAcks,
           cState, cRcvAcks, cData, 
           mData, Msgs, gBcstMsg, gBcstMsgRcvers >>
 
@@ -32,14 +41,15 @@ EMPTY_OWNER   == 0
 
 \* Assumptions
 ASSUME Cardinality(CORES) > 0 \* assume atleast 1 cache
+ASSUME MAX_WRITES > WRITE_TO_UPDATE \* ensure we always have enough writes to trigger an update
 ASSUME EMPTY_OWNER \notin CORES \* id used for EMPTY_ONWER should not be used to identify a CORE
-
+ASSUME ENABLE_DIR_ACKS \in {TRUE, FALSE}
 -------------------------------------------------------------------------------------
 \* Useful Unchanged shortcuts
 unchanged_g       == UNCHANGED <<gBcstMsg, gBcstMsgRcvers>>
 unchanged_m       == UNCHANGED <<mData>>
 unchanged_c       == UNCHANGED <<cState, cRcvAcks, cData>>
-unchanged_d       == UNCHANGED <<dOwner, dSharers, dReqPending, dState>>
+unchanged_d       == UNCHANGED <<dOwner, dSharers, dReqPending, dState, dRcvAcks>>
 unchanged_dm      == unchanged_d /\ unchanged_m
 unchanged_cm      == unchanged_c /\ unchanged_m 
 unchanged_cd      == unchanged_c /\ unchanged_d 
@@ -120,6 +130,7 @@ ATypeOK ==  \* The type correctness invariant
             \* Directory/memory variables 
            /\ dOwner         \in CORES
            /\ dSharers       \subseteq CORES
+           /\ dRcvAcks       \subseteq CORES
            /\ dReqPending    \in Type_binary
            /\ dState         \in Type_State
            /\ cState         \in Type_State
@@ -139,6 +150,7 @@ AInit == \* The initial predicate
            /\ dState      = "I"
            /\ dOwner      = EMPTY_OWNER 
            /\ dSharers    = {}
+           /\ dRcvAcks    = {}
            /\ dReqPending = 0
             \* Core/cache variables 
            /\ cData       = [n \in CORES |-> 0]
@@ -229,12 +241,13 @@ is_E(n) == cState[n] = "E"
 is_S(n) == cState[n] = "S"
 is_I(n) == cState[n] = "I"
 
-rcved_acks_from_set(n, set) ==  set             \subseteq cRcvAcks[n]
-rcved_all_sharer_acks(n)    == (dSharers \ {n}) \subseteq cRcvAcks[n]
+dir_rcved_acks_from_set(set) ==  set             \subseteq dRcvAcks
+rcved_acks_from_set(n,  set) ==  set             \subseteq cRcvAcks[n]
+rcved_all_sharer_acks(n)     == (dSharers \ {n}) \subseteq cRcvAcks[n]
 
-has_valid_data(n)           == ~is_I(n)
-set_next_data_value(n)      == cData' = [cData EXCEPT![n] = cData[n] + 1]
-has_not_reached_final_value == \A n \in CORES : cData[n] < MAX_WRITES + 1
+has_valid_data(n)            == ~is_I(n)
+set_next_data_value(n)       == cData' = [cData EXCEPT![n] = cData[n] + 1]
+has_not_reached_final_value  == \A n \in CORES : cData[n] < MAX_WRITES + 1
 
 \* todo check the correctness of the following 
 is_sharer(n)    == ~is_I(n)
