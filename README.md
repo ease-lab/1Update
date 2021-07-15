@@ -4,7 +4,6 @@
 
 This is the publicly available artifact repository supporting *1-Update*, which contains the formal protocol specification. The specification is written in TLA+ and can be used to verify 1-Update's correctness via model-checking.
 
-TODO
 ---- 
 
 ### File Structure
