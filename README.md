@@ -1,6 +1,6 @@
 # 1-Update Protocol
 
-*1-Update* is a new cache coherence protocol ... A brief description follows and more details can be found in the [PACT'21](http://pact21.snu.ac.kr/) paper. 
+*1-Update* is a new cache coherence protocol that is based on traditional invalidate protocols and also adopts the advantages of updating protocols. It tracks the number of writes to a shared block, and sends at most one update to the reader cores after the observed number of writes. A brief description follows and more details can be found in the [PACT'21](http://pact21.snu.ac.kr/) paper. 
 
 This is the publicly available artifact repository supporting *1-Update*, which contains the formal protocol specification. The specification is written in TLA+ and can be used to verify 1-Update's correctness via model-checking.
 
