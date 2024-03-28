@@ -108,7 +108,7 @@ PutS(n) == \* S to I/S
     /\ upd_state(n, "I")
     /\ IF Cardinality(dSharers) = 1
        THEN upd_dir_state("I")
-       ELSE upd_dir_state("S")
+       ELSE UNCHANGED <<dState>>
     /\ unchanged_gmMsgs 
     /\ UNCHANGED <<dOwner, dReqPending, cData, cRcvAcks, dRcvAcks>>
 
@@ -199,7 +199,7 @@ GetM_Invs(n) ==
     /\ IF (dState = "E" \/ dState = "M")
        THEN /\ ucst_FwdGetM(n, owner_or_min_sharer)     \* single remote owner case
             /\ unchanged_g
-       ELSE IF (dState = "S" \/ dOwner = n) 
+       ELSE IF (cState[n] = "S" \/ dOwner = n) 
             THEN /\ bcst_DInv(n, dSharers \ {n}) \* is owner but w/ sharers
                  /\ unchanged_Msgs
             ELSE /\ ucst_FwdGetM(n, owner_or_min_sharer) \* (remote) owner and sharers

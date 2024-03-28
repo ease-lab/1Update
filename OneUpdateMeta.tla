@@ -266,13 +266,14 @@ Min(S) == CHOOSE x \in S:
 
 \* memory data consistency invariant
 MEM_DATA_CONSISTENT == 
-        \/ \E n \in CORES: is_owner(n)
+        \/ dState = "M"
+        \/ dState = "O"
         \/ \A n \in CORES: cData[n] <= mData
 
 
 \* All valid core/cache data are consistent
 CORE_DATA_CONSISTENT == 
-    \A o,k \in CORES: \/ ~is_I(o)
+    \A o,k \in CORES: \/ is_I(o)
                       \/ /\ cData[o] >= mData
                          /\ cData[o] >= cData[k]
 
